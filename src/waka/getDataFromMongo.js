@@ -2,29 +2,28 @@ import {getCollection, closeClient} from '../mongoClient';
 import {c_error} from "../util/log";
 
 
-const find = async (date) => {
-    const collection = await getCollection();
+const find = async (user, limit) => {
+    const collection = await getCollection(user);
     if (collection == null) {
         return null;
     }
-    return await collection.findOne({'date': date});
+    return await collection.find({}, {
+        projection: {_id: 0},
+        limit: limit,
+        sort: {date: -1}
+    });
 };
 
-const parse = async (date) => {
+const parse = async (user, limit) => {
     let docs = {};
-    await find(date).then((d) => {
-        docs = d;
+    await find(user, limit).then((d) => {
+        docs = d.toArray();
         closeClient();
     }).catch(e => {
         c_error("Error: Get data from MongoDB failed");
         c_error("\tReason: " + e.message);
-        docs = null;
     });
-    if (docs === null) {
-        return -1;
-    } else {
-        return docs['total'];
-    }
+    return docs;
 };
 
 export default parse;

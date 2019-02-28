@@ -1,8 +1,14 @@
+import waka from './waka/getDataFromMongo'
+
 let express = require("express");
 let app = express();
 
-app.get("/url", (req, res, next) => {
-    res.json(["Tony", "Lisa", "Michael", "Ginger", "Food"]);
+app.get("/waka/:user", async (req, res) => {
+    res.json(await waka(req.params['user'], 1));
+});
+
+app.get("/waka/:user/:limit", async (req, res) => {
+    res.json(await waka(req.params['user'], parseInt(req.params['limit'])));
 });
 
 app.listen(3000, () => {

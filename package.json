@@ -5,7 +5,8 @@
   "main": "app.js",
   "scripts": {
     "build-server": "babel -d ./build ./src -s",
-    "run": "node ./build/app.js"
+    "run": "node ./build/app.js",
+    "debug": "nodemon --exec babel-node ./src/app.js"
   },
   "author": "Mars Tan",
   "license": "ISC",
@@ -23,6 +24,7 @@
     "@babel/core": "^7.3.3",
     "@babel/node": "^7.2.2",
     "@babel/preset-env": "^7.3.1",
-    "babel-core": "^7.0.0-bridge.0"
+    "babel-core": "^7.0.0-bridge.0",
+    "nodemon": "^1.18.10"
   }
 }

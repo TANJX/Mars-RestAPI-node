@@ -10,7 +10,7 @@ const url = process.env.MONGO_HOST;
 const dbName = process.env.MONGO_DB;
 let client;
 
-const getCollection = async () => {
+const getCollection = async (collectionName) => {
     let error = false;
     client = await MongoClient.connect(url, {useNewUrlParser: true})
         .catch(e => {
@@ -20,7 +20,7 @@ const getCollection = async () => {
         });
     if (error) return null;
     const db = client.db(dbName);
-    return db.collection(process.env.MONGO_COLLECTION);
+    return db.collection(collectionName);
 };
 
 const closeClient = () => {
