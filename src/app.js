@@ -1,4 +1,5 @@
 import waka from './waka/getDataFromMongo'
+import waka_project from './waka/getProjectDataForChart'
 
 let express = require("express");
 let app = express();
@@ -9,12 +10,16 @@ app.use(function (req, res, next) {
     next();
 });
 
-app.get("/waka/:user", async (req, res) => {
+app.get("/waka/total/:user", async (req, res) => {
     res.json(await waka(req.params['user'], 1));
 });
 
-app.get("/waka/:user/:limit", async (req, res) => {
+app.get("/waka/total/:user/:limit", async (req, res) => {
     res.json(await waka(req.params['user'], parseInt(req.params['limit'])));
+});
+
+app.get("/waka/chart/project/:user", async (req, res) => {
+    res.json(await waka_project(req.params['user'], 0));
 });
 
 app.listen(3000, () => {
