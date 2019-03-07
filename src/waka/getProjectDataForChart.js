@@ -1,6 +1,7 @@
 import waka from './getDataFromMongo';
 import getColor from './getColorSettings';
 import setColor from './setColorSettings';
+import getRandomRGB from "../util/getRandomRGBHex";
 
 const parse = async (user, limit) => {
     const data = await waka(user, limit);
@@ -64,10 +65,7 @@ const parse = async (user, limit) => {
         const color_obj = await getColor(user, 'project', projectNames[p]);
         let hex;
         if (color_obj == null) {
-            const r = Math.floor(Math.random() * 255);
-            const g = Math.floor(Math.random() * 255);
-            const b = Math.floor(Math.random() * 255);
-            hex = '#' + rgbToHex(r) + rgbToHex(g) + rgbToHex(b);
+            hex = getRandomRGB();
             await setColor(user, 'project', projectNames[p], hex);
         } else {
             hex = color_obj['color'];
@@ -94,13 +92,5 @@ const parse = async (user, limit) => {
         datasets: project_datasets,
     };
 };
-
-function rgbToHex(rgb) {
-    let hex = Number(rgb).toString(16);
-    if (hex.length < 2) {
-        hex = "0" + hex;
-    }
-    return hex;
-}
 
 export default parse;

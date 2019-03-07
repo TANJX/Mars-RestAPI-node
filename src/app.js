@@ -1,5 +1,6 @@
 import waka from './waka/getDataFromMongo'
 import waka_project from './waka/getProjectDataForChart'
+import waka_pie from './waka/getPieChartDataForChart'
 import waka_color from './waka/getColorSettings'
 
 let express = require("express");
@@ -21,6 +22,14 @@ app.get("/waka/total/:user/:limit", async (req, res) => {
 
 app.get("/waka/chart/project/:user", async (req, res) => {
     res.json(await waka_project(req.params['user'], 0));
+});
+
+app.get("/waka/chart/editor/:user", async (req, res) => {
+    res.json(await waka_pie(req.params['user'], 'editor', 0));
+});
+
+app.get("/waka/chart/language/:user", async (req, res) => {
+    res.json(await waka_pie(req.params['user'], 'language', 0));
 });
 
 app.get("/waka/chart/settings/:user/:type/:name", async (req, res) => {
