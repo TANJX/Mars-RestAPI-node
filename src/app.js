@@ -1,5 +1,6 @@
 import waka from './waka/getDataFromMongo'
 import waka_project from './waka/getProjectDataForChart'
+import waka_color from './waka/getColorSettings'
 
 let express = require("express");
 let app = express();
@@ -20,6 +21,10 @@ app.get("/waka/total/:user/:limit", async (req, res) => {
 
 app.get("/waka/chart/project/:user", async (req, res) => {
     res.json(await waka_project(req.params['user'], 0));
+});
+
+app.get("/waka/chart/settings/:user/:type/:name", async (req, res) => {
+    res.json(await waka_color(req.params['user'], req.params['type'], req.params['name']));
 });
 
 app.listen(3000, () => {
