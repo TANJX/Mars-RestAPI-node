@@ -5,11 +5,11 @@ function timestamp() {
 }
 
 function c_log(msg) {
-  console.log(timestamp() + msg);
+  console.log(timestamp(), msg);
 }
 
 function c_error(msg) {
-  console.error(timestamp() + msg);
+  console.error(timestamp(), msg);
 }
 
 export { c_log, c_error }
