@@ -3,6 +3,8 @@ services:
   api:
     build: '.'
     working_dir: /home/node/app
+    environment:
+      - NODE_ENV=production
     networks:
       - mongo-nw
     ports:

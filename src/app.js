@@ -39,6 +39,18 @@ app.get("/waka/chart/language/:user", async (req, res) => {
   res.json(await waka_pie(req.params['user'], 'language', 0));
 });
 
+app.get("/waka/chart/project/:user/:limit", async (req, res) => {
+  res.json(await waka_project(req.params['user'], parseInt(req.params['limit'])));
+});
+
+app.get("/waka/chart/editor/:user/:limit", async (req, res) => {
+  res.json(await waka_pie(req.params['user'], 'editor', parseInt(req.params['limit'])));
+});
+
+app.get("/waka/chart/language/:user/:limit", async (req, res) => {
+  res.json(await waka_pie(req.params['user'], 'language', parseInt(req.params['limit'])));
+});
+
 app.get("/waka/chart/settings/:user/:type/:name", async (req, res) => {
   res.json(await waka_color(req.params['user'], req.params['type'], req.params['name']));
 });
