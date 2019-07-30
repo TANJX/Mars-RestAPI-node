@@ -1,7 +1,7 @@
 import waka from './getDataFromMongo';
 import getColor from './getColorSettings';
 import setColor from './setColorSettings';
-import getRandomRGB from "../util/getRandomRGBHex";
+import getRandomRGB from '../util/getRandomRGBHex';
 
 const parse = async (user, limit) => {
   const data = await waka(user, limit);
@@ -9,11 +9,11 @@ const parse = async (user, limit) => {
   // in second
   const threshold = 120;
 
-  let all_project_names = [];
-  let projects = {};
+  const all_project_names = [];
+  const projects = {};
 
   for (let i = data.length - 1; i >= 0; i--) {
-    const projectNames = Object.keys(data[i]['projects']);
+    const projectNames = Object.keys(data[i].projects);
     for (let p = 0; p < projectNames.length; p++) {
       if (!all_project_names.includes(projectNames[p])) {
         all_project_names.push(projectNames[p]);
@@ -22,38 +22,39 @@ const parse = async (user, limit) => {
     }
   }
 
-  let mydata = [];
-  let label = [];
+  const mydata = [];
+  const label = [];
 
   let count = 0;
   for (let i = data.length - 1; i >= 0; i--) {
     // for every day
     mydata[count] = {};
-    const date = data[i]['date'];
-    const minutes = Math.round(data[i]['total'] / 60.0 * 100) / 100.0;
+    const { date } = data[i];
+    const minutes = Math.round(data[i].total / 60.0 * 100) / 100.0;
     label.push(date);
 
-    mydata[count]['x'] = date + " (total: " + minutes + " minutes)";
-    mydata[count]['y'] = minutes;
+    mydata[count].x = `${date} (total: ${minutes} minutes)`;
+    mydata[count].y = minutes;
 
     for (let p = 0; p < all_project_names.length; p++) {
       projects[all_project_names[p]].push({ x: date, y: 0 });
     }
-    const projectNames = Object.keys(data[i]['projects']);
+    const projectNames = Object.keys(data[i].projects);
     for (let p = 0; p < projectNames.length; p++) {
       const projectName = projectNames[p];
-      if (data[i]['projects'][projectName] > threshold)
-        projects[projectName][count]['y'] = data[i]['projects'][projectName];
+      if (data[i].projects[projectName] > threshold) {
+        projects[projectName][count].y = data[i].projects[projectName];
+      }
     }
     count++;
   }
-  let project_datasets = [];
+  const project_datasets = [];
   const projectNames = Object.keys(projects);
   for (let p = 0; p < projectNames.length; p++) {
     // check if project time too small
     let check = false;
     for (let t = 0; t < projects[projectNames[p]].length; t++) {
-      if (projects[projectNames[p]][t]['y'] > threshold) {
+      if (projects[projectNames[p]][t].y > threshold) {
         check = true;
         break;
       }
@@ -68,21 +69,23 @@ const parse = async (user, limit) => {
       hex = getRandomRGB();
       await setColor(user, 'project', projectNames[p], hex);
     } else {
-      hex = color_obj['color'];
+      hex = color_obj.color;
     }
 
     project_datasets.push({
       label: projectNames[p],
       data: projects[projectNames[p]],
-      backgroundColor: hex
+      backgroundColor: hex,
     });
   }
 
   project_datasets.sort((pa, pb) => {
-    let sum_a = 0, sum_b = 0;
-    for (let t = 0; t < pa['data'].length; t++) {
-      sum_a += pa['data'][t]['y'];
-      sum_b += pb['data'][t]['y'];
+    let sum_a = 0;
+    let
+      sum_b = 0;
+    for (let t = 0; t < pa.data.length; t++) {
+      sum_a += pa.data[t].y;
+      sum_b += pb.data[t].y;
     }
     return sum_b - sum_a;
   });

@@ -1,7 +1,7 @@
 import 'dotenv/config';
-import { c_error } from "./util/log";
+import { c_error } from './util/log';
 
-const MongoClient = require('mongodb').MongoClient;
+const { MongoClient } = require('mongodb');
 
 // Connection URL
 const url = process.env.MONGO_HOST;
@@ -13,9 +13,9 @@ let client;
 const getCollection = async (collectionName) => {
   let error = false;
   client = await MongoClient.connect(url, { useNewUrlParser: true })
-    .catch(e => {
-      c_error("Error: Cannot connect to mongodb");
-      c_error("\tReason: " + e.message);
+    .catch((e) => {
+      c_error('Error: Cannot connect to mongodb');
+      c_error(`\tReason: ${e.message}`);
       error = true;
     });
   if (error) return null;
@@ -24,7 +24,7 @@ const getCollection = async (collectionName) => {
 };
 
 const closeClient = () => {
-  client.close()
+  client.close();
 };
 
 export { getCollection, closeClient };

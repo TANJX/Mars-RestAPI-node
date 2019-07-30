@@ -1,7 +1,7 @@
 import waka from './getDataFromMongo';
 import getColor from './getColorSettings';
 import setColor from './setColorSettings';
-import getRandomRGB from '../util/getRandomRGBHex'
+import getRandomRGB from '../util/getRandomRGBHex';
 
 const parse = async (user, field, limit) => {
   const data = await waka(user, limit);
@@ -12,9 +12,9 @@ const parse = async (user, field, limit) => {
   // max amount of editors
   const max = 12;
 
-  let field_data = [];
+  const field_data = [];
 
-  const field_plural = field + 's';
+  const field_plural = `${field}s`;
 
   for (let i = 0; i < data.length; i++) {
     const field_names = Object.keys(data[i][field_plural]);
@@ -23,26 +23,23 @@ const parse = async (user, field, limit) => {
       const time = data[i][field_plural][name];
       const found = field_data.find(n => n.name === name);
       if (found == null) {
-        field_data.push({ name: name, time: time });
+        field_data.push({ name, time });
       } else {
         found.time += time;
       }
     }
   }
 
-  field_data.sort((s1, s2) => {
-    return s2.time - s1.time;
-  });
+  field_data.sort((s1, s2) => s2.time - s1.time);
 
-  let field_name = [];
-  let field_time = [];
-  let field_color = [];
+  const field_name = [];
+  const field_time = [];
+  const field_color = [];
   for (let l = 0; l < field_data.length; l++) {
     if (l >= max) {
       break;
     }
-    if (field_data[l].time < threshold)
-      continue;
+    if (field_data[l].time < threshold) { continue; }
     field_name.push(field_data[l].name);
     field_time.push(field_data[l].time);
     const color_obj = await getColor(user, field, field_data[l].name);
@@ -51,7 +48,7 @@ const parse = async (user, field, limit) => {
       hex = getRandomRGB();
       await setColor(user, field, field_data[l].name, hex);
     } else {
-      hex = color_obj['color'];
+      hex = color_obj.color;
     }
     field_color.push(hex);
   }
@@ -60,7 +57,7 @@ const parse = async (user, field, limit) => {
     labels: field_name,
     datasets: [{
       data: field_time,
-      backgroundColor: field_color
+      backgroundColor: field_color,
     }],
   };
 };
