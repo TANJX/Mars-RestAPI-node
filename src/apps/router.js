@@ -1,9 +1,8 @@
 import { Router } from 'express';
+import log_router from './log';
 
 const router = Router();
 
-router.get('/', async (req, res) => {
-  res.json({ status: 'success' });
-});
+router.use('/log', log_router);
 
 export default router;

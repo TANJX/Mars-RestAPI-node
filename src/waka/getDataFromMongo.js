@@ -6,15 +6,14 @@ const parse = async (user, limit) => {
   if (collection == null) {
     return null;
   }
-  const p = () => new Promise((resolve, reject) => {
-    collection.find({}, {
-      projection: { _id: 0 },
-      limit,
-      sort: { date: -1 },
-    }).toArray((err, d) => (err ? reject(err) : resolve(d)));
-  });
   try {
-    return await p();
+    return await new Promise((resolve, reject) => {
+      collection.find({}, {
+        projection: { _id: 0 },
+        limit,
+        sort: { date: -1 },
+      }).toArray((err, d) => (err ? reject(err) : resolve(d)));
+    });
   } catch (e) {
     c_error(e);
     return [];

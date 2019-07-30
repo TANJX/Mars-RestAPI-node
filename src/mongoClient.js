@@ -24,7 +24,9 @@ const getCollection = async (collectionName) => {
 };
 
 const closeClient = () => {
-  client.close();
+  if (client) {
+    client.close();
+  }
 };
 
 export { getCollection, closeClient };

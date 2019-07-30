@@ -1,11 +1,16 @@
+import bodyParser from 'body-parser';
 import { c_log } from './util/log';
 import waka_router from './waka/router';
 import apps_router from './apps/router';
+
 
 const chalk = require('chalk');
 const express = require('express');
 
 const app = express();
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
