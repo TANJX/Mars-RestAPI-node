@@ -2,7 +2,7 @@ import { Router } from 'express';
 import waka from './getDataFromMongo';
 import waka_project from './getProjectDataForChart';
 import waka_pie from './getPieChartDataForChart';
-import waka_color from './getColorSettings';
+import waka_color from './getColorSetting';
 
 
 const router = Router();
@@ -41,7 +41,8 @@ router.get('/chart/language/:user/:limit', async (req, res) => {
 });
 
 router.get('/chart/settings/:user/:type/:name', async (req, res) => {
-  res.json(await waka_color(req.params.user, req.params.type, req.params.name));
+  const { user, type, name } = req.params;
+  res.json(waka_color(user, type, name));
 });
 
-export default router;
+module.exports = router;

@@ -4,12 +4,13 @@ function timestamp() {
   return `[${moment().format()}]`;
 }
 
-function c_log(msg) {
-  console.log(timestamp(), msg);
-}
+const log = {
+  log(msg) {
+    console.log(`${timestamp()} ${msg}`);
+  },
+  error(msg) {
+    console.error(`${timestamp()} ${msg}`);
+  },
+};
 
-function c_error(msg) {
-  console.error(timestamp(), msg);
-}
-
-export { c_log, c_error };
+export default log;

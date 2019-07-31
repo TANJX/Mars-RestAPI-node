@@ -1,7 +1,7 @@
 import waka from './getDataFromMongo';
-import getColor from './getColorSettings';
-import setColor from './setColorSettings';
-import getRandomRGB from '../util/getRandomRGBHex';
+import getColor from './getColorSetting';
+import setColor from './setColorSetting';
+import getRandomRGB from '../../util/getRandomRGBHex';
 
 const parse = async (user, field, limit) => {
   const data = await waka(user, limit);

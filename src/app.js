@@ -1,13 +1,55 @@
 import bodyParser from 'body-parser';
-import { c_log } from './util/log';
-import waka_router from './waka/router';
-import apps_router from './apps/router';
+import log from './util/log';
 
+require('dotenv').config();
 
 const chalk = require('chalk');
+
+
+// mongoose
+
+const mongo_url = process.env.MONGO_URL;
+const db_apps_url = process.env.DB_APPS;
+const db_waka_url = process.env.DB_WAKA;
+
+if (!mongo_url || !db_apps_url || !db_waka_url) {
+  log.error('MONGO_URL missing. Did you create a .env file?');
+  process.exit(1);
+}
+
+const mongoose = require('mongoose');
+
+const db_waka = mongoose.createConnection(mongo_url + db_waka_url, { useNewUrlParser: true });
+const db_apps = db_waka.useDb(db_apps_url);
+
+db_waka.on('error', (err) => {
+  log.error(err);
+});
+db_waka.once('open', () => {
+  log.log('Connected to MongoDB / WAKA');
+});
+
+db_apps.on('error', (err) => {
+  log.error(err);
+});
+db_apps.once('open', () => {
+  log.log('Connected to MongoDB / APPS');
+});
+
+
+// models
+
+db_waka.model('ColorSetting', require('./waka/models/ColorSetting'));
+db_apps.model('Log', require('./apps/models/Log'));
+
+module.exports = { db_apps, db_waka };
+
+// express
+
 const express = require('express');
 
 const app = express();
+
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -19,12 +61,14 @@ app.use((req, res, next) => {
 });
 
 app.use((req, res, next) => {
-  c_log(chalk.black.bgGreen(` ${req.method}`, chalk.reset.bold(` ${req.path}`)));
+  log.log(chalk.black.bgGreen(` ${req.method}`, chalk.reset.bold(` ${req.path}`)));
   next();
 });
 
-app.use('/waka', waka_router);
-app.use('/apps', apps_router);
+// routers
+
+app.use('/waka', require('./waka/routers'));
+app.use('/apps', require('./apps/routers'));
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
@@ -35,9 +79,9 @@ app.use((req, res, next) => {
 
 app.use((err, req, res, next) => {
   if (err.message === 'Not Found') {
-    c_log(chalk.black.bgRed(' ERROR', chalk.reset.bold(` ${err.message}`)));
+    log.log(chalk.black.bgRed(' ERROR', chalk.reset.bold(` ${err.message}`)));
   } else {
-    c_log(err.stack);
+    log.log(err.stack);
   }
   next(err);
 });
@@ -53,5 +97,5 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(3000, () => {
-  c_log('Server running on port 3000');
+  log.log('Server running on port 3000');
 });

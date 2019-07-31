@@ -5,4 +5,4 @@ const router = Router();
 
 router.use('/log', log_router);
 
-export default router;
+module.exports = router;
