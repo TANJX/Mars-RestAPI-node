@@ -1,8 +1,9 @@
 import { Router } from 'express';
-import log_router from './log';
 
 const router = Router();
 
-router.use('/log', log_router);
+router.use('/log', require('./log'));
+router.use('/event', require('./event'));
+router.use('/progress', require('./progress'));
 
 module.exports = router;

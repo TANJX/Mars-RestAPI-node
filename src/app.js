@@ -41,6 +41,8 @@ db_apps.once('open', () => {
 
 db_waka.model('ColorSetting', require('./waka/models/ColorSetting'));
 db_apps.model('Log', require('./apps/models/Log'));
+db_apps.model('Event', require('./apps/models/Event'));
+db_apps.model('Progress', require('./apps/models/Progress'));
 
 module.exports = { db_apps, db_waka };
 
