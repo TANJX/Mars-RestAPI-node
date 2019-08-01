@@ -137,7 +137,6 @@ describe('Mars Apps', () => {
 
     describe('POST /log/add/', () => {
       it('it should POST the first log', (done) => {
-
         chai.request(app)
           .post('/apps/log/add')
           .send({ msg: log.msg, token })
@@ -249,7 +248,9 @@ describe('Mars Apps', () => {
       it('it should post a event without a token and return an error', (done) => {
         chai.request(app)
           .post('/apps/event/add')
-          .send({ name: event.name, time: event.time, type: event.type, token: '1' })
+          .send({
+            name: event.name, time: event.time, type: event.type, token: '1',
+          })
           .end((err, res) => {
             res.should.have.status(401);
             res.body.should.be.a('object');
@@ -375,7 +376,9 @@ describe('Mars Apps', () => {
       it('it should post a progress without token and return an error', (done) => {
         chai.request(app)
           .post('/apps/progress/add')
-          .send({ name: 't', start: 100, end: 123, token: '1' })
+          .send({
+            name: 't', start: 100, end: 123, token: '1',
+          })
           .end((err, res) => {
             res.should.have.status(401);
             res.body.should.be.a('object');
