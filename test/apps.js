@@ -54,8 +54,22 @@ describe('Mars Apps', () => {
     };
     const time_2 = Date.now();
 
-    describe('/POST Log', () => {
+    describe('/POST a empty Log', () => {
       it('it should POST a Log ', (done) => {
+        chai.request(app)
+          .post('/apps/log/add')
+          .send({})
+          .end((err, res) => {
+            res.should.have.status(422);
+            res.body.should.be.a('object');
+            res.body.should.have.property('errors');
+            done();
+          });
+      });
+    });
+
+    describe('/POST Log', () => {
+      it('it should return an error', (done) => {
         chai.request(app)
           .post('/apps/log/add')
           .send(log)
@@ -135,9 +149,23 @@ describe('Mars Apps', () => {
           });
       });
     });
-    /*
-     * Test the /POST route
-     */
+
+    describe('/POST a empty Event', () => {
+      it('it should return an error', (done) => {
+        chai.request(app)
+          .post('/apps/event/add')
+          .send({ name: 't' })
+          .end((err, res) => {
+            res.should.have.status(422);
+            res.body.should.be.a('object');
+            res.body.should.have.property('errors');
+            res.body.errors.should.have.property('message');
+            res.body.errors.message.should.includes('no time');
+            done();
+          });
+      });
+    });
+
     const event = {
       name: 'The Lord of the Rings',
       time: Date.now(),
@@ -233,9 +261,23 @@ describe('Mars Apps', () => {
           });
       });
     });
-    /*
-     * Test the /POST route
-     */
+
+    describe('/POST a empty Progress', () => {
+      it('it should return an error', (done) => {
+        chai.request(app)
+          .post('/apps/progress/add')
+          .send({ name: 't', end: 123 })
+          .end((err, res) => {
+            res.should.have.status(422);
+            res.body.should.be.a('object');
+            res.body.should.have.property('errors');
+            res.body.errors.should.have.property('message');
+            res.body.errors.message.should.includes('no start');
+            done();
+          });
+      });
+    });
+
     const progress = {
       name: 'The Lord of the Rings',
       start: Date.now(),

@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import param_check from '../../util/param_check';
 
 const { db_apps } = require('../../app');
 
@@ -18,6 +19,7 @@ router.get('/list', async (req, res) => {
 });
 
 router.post('/add', async (req, res) => {
+  if (!param_check(req, res, 'name', 'start', 'end')) return;
   const { name, start, end } = req.body;
   const log = new Progress();
   log.name = name;

@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import param_check from '../../util/param_check';
 
 const { db_apps } = require('../../app');
 
@@ -19,6 +20,7 @@ router.get('/list', async (req, res) => {
 });
 
 router.post('/add', async (req, res) => {
+  if (!param_check(req, res, 'msg')) return;
   const { msg } = req.body;
   const time = Date.now();
   const log = new Log();

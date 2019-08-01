@@ -1,5 +1,7 @@
 import { Router } from 'express';
 
+import param_check from '../../util/param_check';
+
 const { db_apps } = require('../../app');
 
 const Event = db_apps.model('Event');
@@ -18,6 +20,7 @@ router.get('/list', async (req, res) => {
 });
 
 router.post('/add', async (req, res) => {
+  if (!param_check(req, res, 'name', 'time', 'type')) return;
   const { name, type, time } = req.body;
   const event = new Event();
   event.name = name;
