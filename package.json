@@ -6,7 +6,8 @@
   "scripts": {
     "build-server": "babel -d ./build ./src -s",
     "run": "node ./build/app.js",
-    "debug": "nodemon --exec babel-node ./src/app.js"
+    "debug": "nodemon --exec babel-node ./src/app.js",
+    "test": "babel -d ./build ./src -s & mocha --exit"
   },
   "author": "Mars Tan",
   "license": "ISC",
@@ -28,9 +29,12 @@
     "@babel/node": "^7.2.2",
     "@babel/preset-env": "^7.3.1",
     "babel-core": "^7.0.0-bridge.0",
+    "chai": "^4.2.0",
+    "chai-http": "^4.3.0",
     "eslint": "^5.16.0",
     "eslint-config-airbnb-base": "^13.1.0",
     "eslint-plugin-import": "^2.16.0",
+    "mocha": "^6.2.0",
     "nodemon": "^1.18.10"
   }
 }

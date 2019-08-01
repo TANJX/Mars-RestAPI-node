@@ -7,7 +7,11 @@ const Progress = db_apps.model('Progress');
 const router = Router();
 
 router.get('/list', async (req, res) => {
-  Progress.find({}, { _id: 0 }).then((progresses) => {
+  Progress.find(
+    {},
+    { _id: 0 },
+    { sort: { start: 1 } },
+  ).then((progresses) => {
     if (!progresses) progresses = [];
     res.json(progresses);
   });
@@ -19,8 +23,8 @@ router.post('/add', async (req, res) => {
   log.name = name;
   log.start = start;
   log.end = end;
-  log.save().then(() => {
-    res.json({ name, start, end });
+  log.save().then((saved) => {
+    res.json(saved);
   });
 });
 

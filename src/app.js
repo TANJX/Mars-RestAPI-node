@@ -8,19 +8,26 @@ const chalk = require('chalk');
 
 // mongoose
 
-const mongo_url = process.env.MONGO_URL;
-const db_apps_url = process.env.DB_APPS;
-const db_waka_url = process.env.DB_WAKA;
-
-if (!mongo_url || !db_apps_url || !db_waka_url) {
-  log.error('MONGO_URL missing. Did you create a .env file?');
-  process.exit(1);
-}
-
 const mongoose = require('mongoose');
 
-const db_waka = mongoose.createConnection(mongo_url + db_waka_url, { useNewUrlParser: true });
-const db_apps = db_waka.useDb(db_apps_url);
+let db_waka;
+let db_apps;
+
+if (process.env.NODE_ENV === 'test') {
+  db_waka = mongoose.createConnection(process.env.MONGO_URL_TEST, { useNewUrlParser: true });
+  db_apps = db_waka;
+} else {
+  const mongo_url = process.env.MONGO_URL;
+  const db_apps_url = process.env.DB_APPS;
+  const db_waka_url = process.env.DB_WAKA;
+  if (!mongo_url || !db_apps_url || !db_waka_url) {
+    log.error('MONGO_URL missing. Did you create a .env file?');
+    process.exit(1);
+  }
+  db_waka = mongoose.createConnection(mongo_url + db_waka_url, { useNewUrlParser: true });
+  db_apps = db_waka.useDb(db_apps_url);
+}
+
 
 db_waka.on('error', (err) => {
   log.error(err);
@@ -44,14 +51,17 @@ db_apps.model('Log', require('./apps/models/Log'));
 db_apps.model('Event', require('./apps/models/Event'));
 db_apps.model('Progress', require('./apps/models/Progress'));
 
-module.exports = { db_apps, db_waka };
 
 // express
 
 const express = require('express');
 
 const app = express();
+let server;
 
+module.exports = {
+  db_apps, db_waka, app, close_server: () => server.close(),
+};
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -98,6 +108,6 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(3000, () => {
+server = app.listen(3000, () => {
   log.log('Server running on port 3000');
 });

@@ -7,10 +7,15 @@ const Log = db_apps.model('Log');
 const router = Router();
 
 router.get('/list', async (req, res) => {
-  Log.find({}, { _id: 0 }).then((logs) => {
-    if (!logs) logs = [];
-    res.json(logs);
-  });
+  Log.find(
+    {},
+    { _id: 0 },
+    { sort: { time: -1 } },
+  )
+    .then((logs) => {
+      if (!logs) logs = [];
+      res.json(logs);
+    });
 });
 
 router.post('/add', async (req, res) => {
@@ -19,8 +24,8 @@ router.post('/add', async (req, res) => {
   const log = new Log();
   log.msg = msg;
   log.time = time;
-  log.save().then(() => {
-    res.json({ msg, time });
+  log.save().then((saved) => {
+    res.json(saved);
   });
 });
 
