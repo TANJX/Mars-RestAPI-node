@@ -20,7 +20,7 @@ router.get('/list', async (req, res) => {
 });
 
 router.post('/add', async (req, res) => {
-  if (!param_check(req, res, 'msg')) return;
+  if (!await param_check(req, res, 'msg', 'token')) return;
   const { msg } = req.body;
   const time = Date.now();
   const log = new Log();

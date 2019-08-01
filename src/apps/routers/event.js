@@ -20,7 +20,7 @@ router.get('/list', async (req, res) => {
 });
 
 router.post('/add', async (req, res) => {
-  if (!param_check(req, res, 'name', 'time', 'type')) return;
+  if (!await param_check(req, res, 'name', 'time', 'type', 'token')) return;
   const { name, type, time } = req.body;
   const event = new Event();
   event.name = name;

@@ -1,4 +1,4 @@
-/* eslint-disable no-undef */
+/* eslint-disable no-undef,prefer-destructuring */
 // During the test the env variable is set to test
 process.env.NODE_ENV = 'test';
 
@@ -8,6 +8,8 @@ const mongoose = require('mongoose');
 const chai = require('chai');
 const chaiHttp = require('chai-http');
 
+const sha256 = require('js-sha256');
+
 const should = chai.should();
 
 const { db_apps, app, close_server } = require('../build/app');
@@ -15,10 +17,64 @@ const { db_apps, app, close_server } = require('../build/app');
 const Log = db_apps.model('Log');
 const Event = db_apps.model('Event');
 const Progress = db_apps.model('Progress');
+const User = db_apps.model('User');
+const Token = db_apps.model('Token');
 
 chai.use(chaiHttp);
 
 describe('Mars Apps', () => {
+  let token;
+
+  describe('Login', () => {
+    const username = Math.random().toString(36).substr(2);
+    const password = Math.random().toString(36).substr(2);
+    const password_hash = sha256(password);
+
+    before('Clean and Add a User', function (done) {
+      this.timeout(5000);
+      User.deleteMany({}, () => {
+        Token.deleteMany({}, () => {
+          const user = new User();
+          user.name = username;
+          user.password = password_hash;
+          user.save().then(() => {
+            done();
+          });
+        });
+      });
+    });
+
+    describe('POST /login/', () => {
+      it('it should send a wrong user and return an error', (done) => {
+        chai.request(app)
+          .post('/apps/login')
+          .send({ name: 'a', password: 'b' })
+          .end((err, res) => {
+            res.should.have.status(401);
+            res.body.should.be.a('object');
+            res.body.errors.message.should.includes('Cannot find');
+            done();
+          });
+      });
+    });
+
+    describe('POST /login/', () => {
+      it('it should login in successfully', (done) => {
+        chai.request(app)
+          .post('/apps/login')
+          .send({ name: username, password })
+          .end((err, res) => {
+            res.should.have.status(200);
+            res.body.should.be.a('object');
+            res.body.should.have.property('token');
+            res.body.should.have.property('expire');
+            token = res.body.token;
+            done();
+          });
+      });
+    });
+  });
+
   describe('Logs', () => {
     before('Resetting Logs Collection', function (done) {
       this.timeout(3000);
@@ -27,10 +83,7 @@ describe('Mars Apps', () => {
         done();
       });
     });
-    /*
-     * Test the /GET route
-     */
-    describe('/GET Log', () => {
+    describe('GET /log/list/', () => {
       it('it should GET 0 Log', (done) => {
         chai.request(app)
           .get('/apps/log/list')
@@ -54,8 +107,8 @@ describe('Mars Apps', () => {
     };
     const time_2 = Date.now();
 
-    describe('/POST a empty Log', () => {
-      it('it should POST a Log ', (done) => {
+    describe('POST /log/add/', () => {
+      it('it should POST a empty Log and return an error', (done) => {
         chai.request(app)
           .post('/apps/log/add')
           .send({})
@@ -68,11 +121,26 @@ describe('Mars Apps', () => {
       });
     });
 
-    describe('/POST Log', () => {
-      it('it should return an error', (done) => {
+    describe('POST /log/add/', () => {
+      it('it should POST a Log without a token and return an error', (done) => {
         chai.request(app)
           .post('/apps/log/add')
-          .send(log)
+          .send({ msg: log.msg, token: '1' })
+          .end((err, res) => {
+            res.should.have.status(401);
+            res.body.should.be.a('object');
+            res.body.should.have.property('errors');
+            done();
+          });
+      });
+    });
+
+    describe('POST /log/add/', () => {
+      it('it should POST the first log', (done) => {
+
+        chai.request(app)
+          .post('/apps/log/add')
+          .send({ msg: log.msg, token })
           .end((err, res) => {
             res.should.have.status(200);
             res.body.should.be.a('object');
@@ -85,11 +153,11 @@ describe('Mars Apps', () => {
       });
     });
 
-    describe('/POST another Log', () => {
+    describe('POST /log/add/', () => {
       it('it should POST the second Log', (done) => {
         chai.request(app)
           .post('/apps/log/add')
-          .send(log_2)
+          .send({ msg: log_2.msg, token })
           .end((err, res) => {
             res.should.have.status(200);
             res.body.should.be.a('object');
@@ -102,7 +170,7 @@ describe('Mars Apps', () => {
       });
     });
 
-    describe('/GET 2 Log', () => {
+    describe('GET /log/list/', () => {
       it('it should GET 2 Logs, in reverse order', (done) => {
         chai.request(app)
           .get('/apps/log/list')
@@ -137,7 +205,7 @@ describe('Mars Apps', () => {
     /*
      * Test the /GET route
      */
-    describe('/GET Event', () => {
+    describe('GET /event/list/', () => {
       it('it should GET 0 Event', (done) => {
         chai.request(app)
           .get('/apps/event/list')
@@ -150,8 +218,8 @@ describe('Mars Apps', () => {
       });
     });
 
-    describe('/POST a empty Event', () => {
-      it('it should return an error', (done) => {
+    describe('POST /event/add/', () => {
+      it('it should post an empty event and return an error', (done) => {
         chai.request(app)
           .post('/apps/event/add')
           .send({ name: 't' })
@@ -177,11 +245,27 @@ describe('Mars Apps', () => {
       type: 'type b',
     };
 
-    describe('/POST Event', () => {
+    describe('POST /event/add/', () => {
+      it('it should post a event without a token and return an error', (done) => {
+        chai.request(app)
+          .post('/apps/event/add')
+          .send({ name: event.name, time: event.time, type: event.type, token: '1' })
+          .end((err, res) => {
+            res.should.have.status(401);
+            res.body.should.be.a('object');
+            res.body.should.have.property('errors');
+            done();
+          });
+      });
+    });
+
+    describe('POST /event/add/', () => {
       it('it should POST a Event ', (done) => {
         chai.request(app)
           .post('/apps/event/add')
-          .send(event)
+          .send({
+            name: event.name, time: event.time, type: event.type, token,
+          })
           .end((err, res) => {
             res.should.have.status(200);
             res.body.should.be.a('object');
@@ -196,11 +280,13 @@ describe('Mars Apps', () => {
       });
     });
 
-    describe('/POST another Event', () => {
+    describe('POST /event/add/', () => {
       it('it should POST the second Event', (done) => {
         chai.request(app)
           .post('/apps/event/add')
-          .send(event_2)
+          .send({
+            name: event_2.name, time: event_2.time, type: event_2.type, token,
+          })
           .end((err, res) => {
             res.should.have.status(200);
             res.body.should.be.a('object');
@@ -212,7 +298,7 @@ describe('Mars Apps', () => {
       });
     });
 
-    describe('/GET 2 Event', () => {
+    describe('GET /event/list/', () => {
       it('it should GET 2 Events, in time order', (done) => {
         chai.request(app)
           .get('/apps/event/list')
@@ -241,15 +327,11 @@ describe('Mars Apps', () => {
   describe('Progress', () => {
     before('Resetting Progress Collection', function (done) {
       this.timeout(3000);
-      // Before each test we empty the database
       Progress.deleteMany({}, (err) => {
         done();
       });
     });
-    /*
-     * Test the /GET route
-     */
-    describe('/GET Event', () => {
+    describe('GET /progress/list/', () => {
       it('it should GET 0 Progress', (done) => {
         chai.request(app)
           .get('/apps/progress/list')
@@ -262,8 +344,8 @@ describe('Mars Apps', () => {
       });
     });
 
-    describe('/POST a empty Progress', () => {
-      it('it should return an error', (done) => {
+    describe('POST /progress/add/', () => {
+      it('it should post an empty progress and return an error', (done) => {
         chai.request(app)
           .post('/apps/progress/add')
           .send({ name: 't', end: 123 })
@@ -289,11 +371,27 @@ describe('Mars Apps', () => {
       end: Date.now() + 200,
     };
 
-    describe('/POST Progress', () => {
+    describe('POST /progress/add/', () => {
+      it('it should post a progress without token and return an error', (done) => {
+        chai.request(app)
+          .post('/apps/progress/add')
+          .send({ name: 't', start: 100, end: 123, token: '1' })
+          .end((err, res) => {
+            res.should.have.status(401);
+            res.body.should.be.a('object');
+            res.body.should.have.property('errors');
+            done();
+          });
+      });
+    });
+
+    describe('POST /progress/add/', () => {
       it('it should POST a Progress ', (done) => {
         chai.request(app)
           .post('/apps/progress/add')
-          .send(progress)
+          .send({
+            name: progress.name, start: progress.start, end: progress.end, token,
+          })
           .end((err, res) => {
             res.should.have.status(200);
             res.body.should.be.a('object');
@@ -308,11 +406,13 @@ describe('Mars Apps', () => {
       });
     });
 
-    describe('/POST another Progress', () => {
+    describe('POST /progress/add/', () => {
       it('it should POST the second Progress', (done) => {
         chai.request(app)
           .post('/apps/progress/add')
-          .send(progress_2)
+          .send({
+            name: progress_2.name, start: progress_2.start, end: progress_2.end, token,
+          })
           .end((err, res) => {
             res.should.have.status(200);
             res.body.should.be.a('object');
@@ -324,7 +424,7 @@ describe('Mars Apps', () => {
       });
     });
 
-    describe('/GET 2 Progress', () => {
+    describe('GET /progress/list/', () => {
       it('it should GET 2 Progress, in start time order', (done) => {
         chai.request(app)
           .get('/apps/progress/list')
@@ -350,8 +450,12 @@ describe('Mars Apps', () => {
     });
   });
 
-  after('Stop Server', (done) => {
-    close_server();
-    done();
+  after('Cleanup and Stop Server', (done) => {
+    User.deleteMany({}, () => {
+      Token.deleteMany({}, () => {
+        close_server();
+        done();
+      });
+    });
   });
 });

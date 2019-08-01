@@ -50,6 +50,8 @@ db_waka.model('ColorSetting', require('./waka/models/ColorSetting'));
 db_apps.model('Log', require('./apps/models/Log'));
 db_apps.model('Event', require('./apps/models/Event'));
 db_apps.model('Progress', require('./apps/models/Progress'));
+db_apps.model('User', require('./apps/models/User'));
+db_apps.model('Token', require('./apps/models/Token'));
 
 
 // express
@@ -60,7 +62,13 @@ const app = express();
 let server;
 
 module.exports = {
-  db_apps, db_waka, app, close_server: () => server.close(),
+  db_apps,
+  db_waka,
+  app,
+  close_server: () => {
+    server.close();
+    process.exit(0);
+  },
 };
 
 app.use(bodyParser.json());
