@@ -5,6 +5,6 @@ const ColorSettingSchema = new mongoose.Schema({
   type: String,
   name: String,
   color: String,
-});
+}, { collection: '_settings_color' });
 
 module.exports = ColorSettingSchema;
