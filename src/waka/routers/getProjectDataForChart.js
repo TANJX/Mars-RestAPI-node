@@ -65,13 +65,12 @@ const parse = async (user, limit) => {
 
     const color_obj = await getColor(user, 'project', projectNames[p]);
     let hex;
-    if (color_obj == null) {
+    if (color_obj.color) {
+      hex = color_obj.color;
+    } else {
       hex = getRandomRGB();
       await setColor(user, 'project', projectNames[p], hex);
-    } else {
-      hex = color_obj.color;
     }
-
     project_datasets.push({
       label: projectNames[p],
       data: projects[projectNames[p]],

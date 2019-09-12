@@ -44,11 +44,11 @@ const parse = async (user, field, limit) => {
     field_time.push(field_data[l].time);
     const color_obj = await getColor(user, field, field_data[l].name);
     let hex;
-    if (color_obj == null) {
+    if (color_obj.color) {
+      hex = color_obj.color;
+    } else {
       hex = getRandomRGB();
       await setColor(user, field, field_data[l].name, hex);
-    } else {
-      hex = color_obj.color;
     }
     field_color.push(hex);
   }
