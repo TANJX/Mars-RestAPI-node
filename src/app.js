@@ -1,6 +1,9 @@
 import bodyParser from 'body-parser';
 import log from './util/log';
 
+const fs = require('fs');
+const http = require('http');
+const https = require('https');
 require('dotenv').config();
 
 const chalk = require('chalk');
@@ -116,6 +119,24 @@ app.use((err, req, res, next) => {
   });
 });
 
-server = app.listen(3000, () => {
-  log.log('Server running on port 3000');
+const httpServer = http.createServer(app);
+
+server = httpServer.listen(80, () => {
+  log.log('Server running on port 80');
 });
+
+if (process.env.NODE_ENV === 'production') {
+  const key = fs.readFileSync('/home/node/app/cert/privkey.pem', 'utf8');
+  const cert = fs.readFileSync('/home/node/app/cert/cert.pem', 'utf8');
+  const ca = fs.readFileSync('/home/node/app/cert/chain.pem', 'utf8');
+
+  const credentials = {
+    key,
+    cert,
+    ca,
+  };
+  const httpsServer = https.createServer(credentials, app);
+  httpsServer.listen(443, () => {
+    log.log('HTTPS Server running on port 443');
+  });
+}
