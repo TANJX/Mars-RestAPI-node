@@ -19,7 +19,7 @@ router.get('/list', async (req, res) => {
 });
 
 router.post('/add', async (req, res) => {
-  if (!await param_check(req, res, 'name', 'start', 'end', 'token')) return;
+  if (!await param_check(req, res, 'token', 'name', 'start', 'end')) return;
   const { name, start, end } = req.body;
   const log = new Progress();
   log.name = name;

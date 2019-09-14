@@ -221,13 +221,29 @@ describe('Mars Apps', () => {
       it('it should post an empty event and return an error', (done) => {
         chai.request(app)
           .post('/apps/event/add')
-          .send({ name: 't' })
+          .send({ name: 't', token })
           .end((err, res) => {
             res.should.have.status(422);
             res.body.should.be.a('object');
             res.body.should.have.property('errors');
             res.body.errors.should.have.property('message');
-            res.body.errors.message.should.includes('no time');
+            res.body.errors.message.should.includes('no date');
+            done();
+          });
+      });
+    });
+
+    describe('POST /event/add/', () => {
+      it('it should post an event with wrong date format and return an error', (done) => {
+        chai.request(app)
+          .post('/apps/event/add')
+          .send({ name: 't', date: '2019-20-01', type: 'type', token })
+          .end((err, res) => {
+            res.should.have.status(422);
+            res.body.should.be.a('object');
+            res.body.should.have.property('errors');
+            res.body.errors.should.have.property('message');
+            res.body.errors.message.should.includes('wrong');
             done();
           });
       });
@@ -235,12 +251,12 @@ describe('Mars Apps', () => {
 
     const event = {
       name: 'The Lord of the Rings',
-      time: Date.now(),
+      date: '2019-04-24',
       type: 'type a',
     };
     const event_2 = {
       name: 'Mars Inc.',
-      time: Date.now() + 10000,
+      date: '2019-04-25',
       type: 'type b',
     };
 
@@ -249,7 +265,7 @@ describe('Mars Apps', () => {
         chai.request(app)
           .post('/apps/event/add')
           .send({
-            name: event.name, time: event.time, type: event.type, token: '1',
+            name: event.name, date: event.date, type: event.type, token: '1',
           })
           .end((err, res) => {
             res.should.have.status(401);
@@ -265,7 +281,7 @@ describe('Mars Apps', () => {
         chai.request(app)
           .post('/apps/event/add')
           .send({
-            name: event.name, time: event.time, type: event.type, token,
+            name: event.name, date: event.date, type: event.type, token,
           })
           .end((err, res) => {
             res.should.have.status(200);
@@ -274,8 +290,8 @@ describe('Mars Apps', () => {
             res.body.name.should.equals(event.name);
             res.body.should.have.property('type');
             res.body.type.should.equals(event.type);
-            res.body.should.have.property('time');
-            (new Date(res.body.time)).getTime().should.equals(event.time);
+            res.body.should.have.property('date');
+            res.body.date.should.equals(event.date);
             done();
           });
       });
@@ -286,14 +302,14 @@ describe('Mars Apps', () => {
         chai.request(app)
           .post('/apps/event/add')
           .send({
-            name: event_2.name, time: event_2.time, type: event_2.type, token,
+            name: event_2.name, date: event_2.date, type: event_2.type, token,
           })
           .end((err, res) => {
             res.should.have.status(200);
             res.body.should.be.a('object');
             res.body.name.should.equals(event_2.name);
             res.body.type.should.equals(event_2.type);
-            (new Date(res.body.time)).getTime().should.equals(event_2.time);
+            res.body.date.should.equals(event_2.date);
             done();
           });
       });
@@ -309,10 +325,8 @@ describe('Mars Apps', () => {
             res.body.length.should.be.eql(2);
             res.body[0].name.should.equals(event.name);
             res.body[0].type.should.equals(event.type);
-            (new Date(res.body[0].time)).getTime().should.closeTo(event.time, 5000);
             res.body[1].name.should.equals(event_2.name);
             res.body[1].type.should.equals(event_2.type);
-            (new Date(res.body[1].time)).getTime().should.closeTo(event_2.time, 5000);
             done();
           });
       });
@@ -349,7 +363,7 @@ describe('Mars Apps', () => {
       it('it should post an empty progress and return an error', (done) => {
         chai.request(app)
           .post('/apps/progress/add')
-          .send({ name: 't', end: 123 })
+          .send({ name: 't', end: 123, token })
           .end((err, res) => {
             res.should.have.status(422);
             res.body.should.be.a('object');
