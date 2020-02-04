@@ -8,8 +8,11 @@ import getRandomRGB from '../../util/getRandomRGBHex';
  * @param {number} limit - number of days
  * @param {number} threshold - minimum time in seconds of project time
  */
-const parse = async (user, limit, threshold = 3600) => {
+const parse = async (user, limit, threshold = -1) => {
   const data = await waka(user, limit);
+  if (threshold < 0) {
+    threshold = limit > 60 ? 3600 : 300;
+  }
 
   const all_project_names = [];
   const projects = {};
@@ -41,7 +44,7 @@ const parse = async (user, limit, threshold = 3600) => {
     for (let p = 0; p < all_project_names.length; p++) {
       projects[all_project_names[p]].push({
         x: date,
-        y: 0
+        y: 0,
       });
     }
     const projectNames = Object.keys(data[i].projects);

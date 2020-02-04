@@ -50,6 +50,7 @@ db_apps.once('open', () => {
 // models
 
 db_waka.model('ColorSetting', require('./waka/models/ColorSetting'));
+db_waka.model('ProjectName', require('./waka/models/ProjectName'));
 db_apps.model('Log', require('./apps/models/Log'));
 db_apps.model('Event', require('./apps/models/Event'));
 db_apps.model('Progress', require('./apps/models/Progress'));

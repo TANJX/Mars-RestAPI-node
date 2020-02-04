@@ -2,7 +2,7 @@ import log from '../../util/log';
 
 const { db_waka } = require('../../app');
 
-const parse = async (user, limit) => {
+const parse = async (user, limit = 0) => {
   try {
     return await new Promise((resolve, reject) => {
       db_waka.db.collection(user, (err, collection) => {

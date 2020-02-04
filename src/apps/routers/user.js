@@ -21,7 +21,7 @@ router.post('/', async (req, res) => {
     await Token.findOneAndDelete({ user: user.name }).exec();
     token.user = user.name;
     token.token = user_token;
-    token.expire = Date.now() + 1000 * 60;
+    token.expire = Date.now() + 1000 * 60 * 60 * 24 * 7;
     token.save().then((saved) => {
       res.status(200).json(saved);
     });

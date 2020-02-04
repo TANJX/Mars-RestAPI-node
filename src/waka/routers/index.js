@@ -4,6 +4,9 @@ import waka_project_sum from './getProjectSummary';
 import waka_project from './getProjectDataForChart';
 import waka_pie from './getPieChartDataForChart';
 import waka_color from './getColorSetting';
+import waka_project_name from './setProjectNameSetting';
+import waka_db_cleanup from './dbCleanup';
+import param_check from '../../util/param_check';
 
 
 const router = Router();
@@ -58,9 +61,21 @@ router.get('/chart/language/:user/:limit', async (req, res) => {
 });
 
 
-router.get('/chart/settings/:user/:type/:name', async (req, res) => {
+router.get('/settings/color/:user/:type/:name', async (req, res) => {
   const { user, type, name } = req.params;
-  res.json(waka_color(user, type, name));
+  res.json(await waka_color(user, type, name));
+});
+
+router.post('/settings/projectname/:user/', async (req, res) => {
+  if (!await param_check(req, res, 'replace_to', 'name')) return;
+  const { user } = req.params;
+  const { name, replace_to } = req.body;
+  res.json(await waka_project_name(user, name, replace_to));
+});
+
+router.get('/settings/cleanup/:user/', async (req, res) => {
+  const { user } = req.params;
+  res.json(await waka_db_cleanup(user));
 });
 
 module.exports = router;
