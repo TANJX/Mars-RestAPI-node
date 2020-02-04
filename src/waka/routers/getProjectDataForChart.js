@@ -3,11 +3,13 @@ import getColor from './getColorSetting';
 import setColor from './setColorSetting';
 import getRandomRGB from '../../util/getRandomRGBHex';
 
-const parse = async (user, limit) => {
+/**
+ * @param user
+ * @param {number} limit - number of days
+ * @param {number} threshold - minimum time in seconds of project time
+ */
+const parse = async (user, limit, threshold = 3600) => {
   const data = await waka(user, limit);
-
-  // in second
-  const threshold = 120;
 
   const all_project_names = [];
   const projects = {};
@@ -37,7 +39,10 @@ const parse = async (user, limit) => {
     mydata[count].y = minutes;
 
     for (let p = 0; p < all_project_names.length; p++) {
-      projects[all_project_names[p]].push({ x: date, y: 0 });
+      projects[all_project_names[p]].push({
+        x: date,
+        y: 0
+      });
     }
     const projectNames = Object.keys(data[i].projects);
     for (let p = 0; p < projectNames.length; p++) {

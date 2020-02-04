@@ -26,5 +26,6 @@
     "no-continue": "off",
     "no-await-in-loop": "off",
     "object-curly-newline": "off",
+    "radix": "off",
   }
 }
