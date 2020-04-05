@@ -10,6 +10,13 @@ const ApplicationName = db_acad280.model('ApplicationName');
 
 const router = Router();
 
+
+/**
+ * List all MouseLocation
+ *
+ * @return Object
+ * { locations: Array of MouseLocation }
+ */
 router.get('/locations', async (req, res) => {
   MouseLocation.find(
     {},
@@ -17,10 +24,21 @@ router.get('/locations', async (req, res) => {
     { sort: { time: 1 } },
   ).then((locations) => {
     if (!locations) locations = [];
-    res.json(locations);
+    res.json({ locations });
   });
 });
 
+
+/**
+ * Batch add MouseLocations
+ *
+ * @param Object
+ * { locations: Array}
+ * Entries with missing field will be ignored
+ *
+ * @return Object
+ * { count : Number } number of entries processed
+ */
 router.post('/locations', async (req, res) => {
   if (!Array.isArray(req.body.locations)) {
     return res.status(422).json({
@@ -43,17 +61,45 @@ router.post('/locations', async (req, res) => {
 });
 
 
+/**
+ * List all ProcessName
+ *
+ * @return Object
+ * Example:
+ * {
+ *   "explorer.exe": 1
+ * }
+ */
 router.get('/processes', async (req, res) => {
   ProcessName.find(
     {},
     { _id: 0 },
     { sort: { id: 1 } },
   ).then((processes) => {
-    if (!processes) processes = [];
-    res.json(processes);
+    const result = {};
+    if (processes) {
+      for (const process of processes) {
+        result[process.name] = process.id;
+      }
+    }
+    res.json(result);
   });
 });
 
+
+/**
+ * Batch add ProcessName
+ *
+ * @param Object
+ * Example:
+ * {
+ *   "explorer.exe": 1
+ * }
+ * Entries with existing name or id will be ignored
+ *
+ * @return Object
+ * { count : Number } number of entries processed
+ */
 router.post('/processes', async (req, res) => {
   if (!Array.isArray(req.body.processes)) {
     return res.status(422).json({
@@ -73,17 +119,46 @@ router.post('/processes', async (req, res) => {
   res.json({ count: processes.length });
 });
 
+
+/**
+ * List all ApplicationName
+ *
+ * @return Object
+ * Example:
+ * {
+ *   "Adobe Photoshop 2020": 1
+ * }
+ */
 router.get('/applications', async (req, res) => {
   ApplicationName.find(
     {},
     { _id: 0 },
     { sort: { id: 1 } },
   ).then((applications) => {
-    if (!applications) applications = [];
-    res.json(applications);
+    const result = {};
+    if (applications) {
+      for (const application of applications) {
+        result[application.name] = application.id;
+      }
+    }
+    res.json(result);
   });
 });
 
+
+/**
+ * Batch add ApplicationName
+ *
+ * @param Object
+ * Example:
+ * {
+ *   "Adobe Photoshop 2020": 1
+ * }
+ * Entry with existing name or id will be ignored
+ *
+ * @return Object
+ * { count : Number } number of entries processed
+ */
 router.post('/applications', async (req, res) => {
   if (!Array.isArray(req.body.applicationes)) {
     return res.status(422).json({
