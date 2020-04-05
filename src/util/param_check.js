@@ -1,12 +1,13 @@
-/*
- * Check if params and token exist,
- * if not, status 422, return false
- */
+
 
 const { db_apps } = require('../app');
 
 const Token = db_apps.model('Token');
 
+/**
+ * Check if params and token exist,
+ * if not, status 422, return false
+ */
 async function check(req, res, ...params) {
   for (const param of params) {
     if (!req.body[param]) {
@@ -31,5 +32,4 @@ async function check(req, res, ...params) {
   }
   return true;
 }
-
 export default check;

@@ -20,7 +20,7 @@ router.get('/list', async (req, res) => {
 });
 
 router.post('/add', async (req, res) => {
-  if (!await param_check(req, res, 'token', 'name', 'date', 'type')) return;
+  if (!await param_check(req, res, 'token', 'name', 'date', 'type')) return; // TODO
   const { name, type, date } = req.body;
   if (!/\d{4}-[0-1]\d-[0-3]\d/g.test(date)) {
     res.status(422).json({

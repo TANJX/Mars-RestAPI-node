@@ -1,6 +1,6 @@
 import { Router } from 'express';
 
-import param_check from '../../util/param_check';
+import variable_valid from '../../util/variable_valid';
 
 const { db_acad280 } = require('../../app');
 
@@ -8,7 +8,7 @@ const MouseLocation = db_acad280.model('MouseLocation');
 
 const router = Router();
 
-router.get('/list', async (req, res) => {
+router.get('/locations', async (req, res) => {
   MouseLocation.find(
     {},
     { _id: 0 },
@@ -19,18 +19,25 @@ router.get('/list', async (req, res) => {
   });
 });
 
-router.post('/add', async (req, res) => {
-  if (!await param_check(req, res, 'time', 'positionX', 'positionY', 'processId', 'applicationName')) return;
-  const { time, positionX, positionY, processId, applicationName } = req.body;
-  const mouseLocation = new MouseLocation();
-  mouseLocation.time = time;
-  mouseLocation.positionX = positionX;
-  mouseLocation.positionY = positionY;
-  mouseLocation.processId = processId;
-  mouseLocation.applicationName = applicationName;
-  mouseLocation.save().then((saved) => {
-    res.json(saved);
-  });
+router.post('/locations', async (req, res) => {
+  if (!Array.isArray(req.body.locations)) {
+    return res.status(422).json({
+      errors: {
+        message: 'missing/wrong locations field',
+      },
+    });
+  }
+  const locations = req.body.locations.filter(
+    location => variable_valid(
+      location.time,
+      location.positionX,
+      location.positionY,
+      location.processId,
+      location.applicationName,
+    ),
+  );
+  await MouseLocation.insertMany(locations);
+  res.json({ count: locations.length });
 });
 
 
