@@ -47,6 +47,7 @@ router.post('/locations', async (req, res) => {
       },
     });
   }
+  console.log(req.body.locations);
   const locations = req.body.locations.filter(
     location => variable_valid(
       location.time,
@@ -93,7 +94,9 @@ router.get('/processes', async (req, res) => {
  * @param Object
  * Example:
  * {
- *   "explorer.exe": 1
+ *   "processes": {
+ *     "explorer.exe": 1
+ *   }
  * }
  * Entries with existing name or id will be ignored
  *
@@ -101,21 +104,39 @@ router.get('/processes', async (req, res) => {
  * { count : Number } number of entries processed
  */
 router.post('/processes', async (req, res) => {
-  if (!Array.isArray(req.body.processes)) {
+  if (!req.body.processes) {
     return res.status(422).json({
       errors: {
         message: 'missing/wrong processes field',
       },
     });
   }
-  // TODO check id exists
-  const processes = req.body.processes.filter(
-    process => variable_valid(
-      process.id,
-      process.name,
-    ),
-  );
-  await ProcessName.insertMany(processes);
+  const existing_processes = await ProcessName.find(
+    {},
+    { _id: 0 },
+    { sort: { id: 1 } },
+  ).exec();
+  if (!Array.isArray(existing_processes)) {
+    return res.status(422).json({
+      errors: {
+        message: 'server error',
+      },
+    });
+  }
+  const existing_id = [];
+  const existing_name = [];
+  existing_processes.forEach((process) => {
+    existing_id.push(process.id);
+    existing_name.push(process.name);
+  });
+  const processes = [];
+  Object.keys(req.body.processes).forEach((name) => {
+    const id = req.body.processes[name];
+    if (typeof id === 'number' && !existing_id.includes(id) && !existing_name.includes(name)) {
+      processes.push({ name, id });
+    }
+  });
+  if (processes.length > 0) await ProcessName.insertMany(processes);
   res.json({ count: processes.length });
 });
 
@@ -152,7 +173,9 @@ router.get('/applications', async (req, res) => {
  * @param Object
  * Example:
  * {
+ * "applications": {
  *   "Adobe Photoshop 2020": 1
+ *  }
  * }
  * Entry with existing name or id will be ignored
  *
@@ -160,21 +183,39 @@ router.get('/applications', async (req, res) => {
  * { count : Number } number of entries processed
  */
 router.post('/applications', async (req, res) => {
-  if (!Array.isArray(req.body.applicationes)) {
+  if (!req.body.applications) {
     return res.status(422).json({
       errors: {
         message: 'missing/wrong applications field',
       },
     });
   }
-  // TODO check id exists
-  const applications = req.body.applicationes.filter(
-    application => variable_valid(
-      application.id,
-      application.name,
-    ),
-  );
-  await ApplicationName.insertMany(applications);
+  const existing_applications = await ApplicationName.find(
+    {},
+    { _id: 0 },
+    { sort: { id: 1 } },
+  ).exec();
+  if (!Array.isArray(existing_applications)) {
+    return res.status(422).json({
+      errors: {
+        message: 'server error',
+      },
+    });
+  }
+  const existing_id = [];
+  const existing_name = [];
+  existing_applications.forEach((process) => {
+    existing_id.push(process.id);
+    existing_name.push(process.name);
+  });
+  const applications = [];
+  Object.keys(req.body.applications).forEach((name) => {
+    const id = req.body.applications[name];
+    if (typeof id === 'number' && !existing_id.includes(id) && !existing_name.includes(name)) {
+      applications.push({ name, id });
+    }
+  });
+  if (applications.length > 0) await ProcessName.insertMany(applications);
   res.json({ count: applications.length });
 });
 
