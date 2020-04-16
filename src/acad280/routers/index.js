@@ -15,17 +15,61 @@ const router = Router();
  * List all MouseLocation
  *
  * @return Object
- * { locations: Array of MouseLocation }
+ {
+ locations: [
+  {
+    icon: '/img/ai.png',
+    name: 'Adobe Illustrator',
+    locations: [
+      [1580281103.5818355, 603, 1183],
+      [1580281103.5818355, 603, 1183],
+      [1580281103.5818355, 603, 1183],
+      [1580281103.5818355, 603, 1183],
+    ]
+  },
+  {
+    icon: '/img/ae.png',
+    name: 'Adobe After Effects',
+    locations: [
+      [1580281103.5818355, 603, 1183],
+      [1580281103.5818355, 603, 1183],
+      [1580281103.5818355, 603, 1183],
+      [1580281103.5818355, 603, 1183],
+    ]
+  }
+ ]
+ }
  */
 router.get('/locations', async (req, res) => {
-  MouseLocation.find(
+  ProcessName.find(
     {},
     { _id: 0 },
-    { sort: { time: 1 } },
-  ).then((locations) => {
-    if (!locations) locations = [];
-    res.json({ locations });
+    { sort: { id: 1 } },
+  ).then((processes) => {
+    if (processes) {
+      MouseLocation.find(
+        {},
+        { _id: 0 },
+        { sort: { time: 1 } },
+      ).then((locations) => {
+        const result = [];
+        for (const process of processes) {
+          const n = process.name.replace('.exe', '');
+          const entry = {
+            icon: `${n}.png`,
+            name: process.fullname || n,
+            locations: locations.filter(l => l.processId === process.id).map(l => [l.time, l.positionX, l.positionY]),
+          };
+          if (entry.locations.length > 20) {
+            result.push(entry);
+          }
+        }
+        result.sort((a, b) => b.locations.length - a.locations.length);
+        res.json({ locations: result });
+      });
+    }
   });
+
 });
 
 
@@ -47,7 +91,6 @@ router.post('/locations', async (req, res) => {
       },
     });
   }
-  console.log(req.body.locations);
   const locations = req.body.locations.filter(
     location => variable_valid(
       location.time,
