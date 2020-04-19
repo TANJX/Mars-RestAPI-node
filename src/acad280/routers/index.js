@@ -1,12 +1,15 @@
 import { Router } from 'express';
 
+const puppeteer = require('puppeteer');
+const fs = require('fs');
+
 import variable_valid from '../../util/variable_valid';
+import log from "../../util/log";
 
 const { db_acad280 } = require('../../app');
 
 const MouseLocation = db_acad280.model('MouseLocation');
 const ProcessName = db_acad280.model('ProcessName');
-const ApplicationName = db_acad280.model('ApplicationName');
 
 const router = Router();
 
@@ -47,30 +50,57 @@ router.get('/locations', async (req, res) => {
     { sort: { id: 1 } },
   ).then((processes) => {
     if (processes) {
+      log.log('1');
       MouseLocation.find(
-        {},
+        {
+          time: { $gt: mouse_location_cache_time },
+        },
         { _id: 0 },
         { sort: { time: 1 } },
       ).then((locations) => {
+        log.log(locations.length);
+        log.log(2);
+        if (locations.length > 0) {
+          mouse_location_cache_time = locations[locations.length - 1].time[0];
+          let lt = -1;
+          if (mouse_location_cache.length > 0) {
+            lt = mouse_location_cache[mouse_location_cache.length - 1].time[0];
+            for (const location of locations) {
+              if (location.time > lt) {
+                mouse_location_cache.push(location);
+              }
+            }
+          } else {
+            mouse_location_cache = locations;
+          }
+        }
+        log.log('3');
+        log.log(mouse_location_cache.length);
         const result = [];
         for (const process of processes) {
           const n = process.name.replace('.exe', '');
           const entry = {
             icon: `${n}.png`,
             name: process.fullname || n,
-            locations: locations.filter(l => l.processId === process.id).map(l => [l.time, l.positionX, l.positionY]),
+            locations: mouse_location_cache.filter(l => l.processId === process.id).map(l => [l.time, l.positionX, l.positionY]),
+            width: process.width || 2560,
+            height: process.height || 1400,
           };
-          if (entry.locations.length > 20) {
+          if (entry.locations.length > 500) {
             result.push(entry);
           }
         }
+        log.log('4');
         result.sort((a, b) => b.locations.length - a.locations.length);
+        log.log('5');
         res.json({ locations: result });
       });
     }
   });
-
 });
+
+let mouse_location_cache = [];
+let mouse_location_cache_time = -1;
 
 
 /**
@@ -183,83 +213,78 @@ router.post('/processes', async (req, res) => {
   res.json({ count: processes.length });
 });
 
-
 /**
- * List all ApplicationName
- *
- * @return Object
- * Example:
- * {
- *   "Adobe Photoshop 2020": 1
- * }
+ * Update thumbnail
  */
-router.get('/applications', async (req, res) => {
-  ApplicationName.find(
-    {},
-    { _id: 0 },
-    { sort: { id: 1 } },
-  ).then((applications) => {
-    const result = {};
-    if (applications) {
-      for (const application of applications) {
-        result[application.name] = application.id;
+router.post('/update_thumbnail', async (req, res) => {
+  if (!req.body.apps) {
+    return res.status(422).json({
+      errors: {
+        message: 'missing/wrong processes field',
+      },
+    });
+  }
+  const path = `${__dirname}/thumbnail`;
+  if (!fs.existsSync(path)) {
+    fs.mkdirSync(path);
+  }
+  const apps = req.body.apps.slice(0);
+  const files = {};
+  const toBeDeleted = [];
+  fs.readdirSync(path).forEach(f => {
+    // for each existing thumbnail file
+    const n = f.replace('.png', '').split('-');
+    // still valid for 1 hour
+    if (apps.includes(n[0])) {
+      if (parseInt(n[1]) + 1000 * 60 * 60 > Date.now()) {
+        for (let i = 0; i < apps.length; i++) {
+          if (apps[i] === n[0]) {
+            apps.splice(i, 1);
+            break;
+          }
+        }
+      } else {
+        toBeDeleted.push(f);
       }
     }
-    res.json(result);
+    files[n[0]] = n[1];
   });
+  if (apps.length > 0) {
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    await page.setViewport({
+      width: 960,
+      height: 525,
+      deviceScaleFactor: 1,
+    });
+    await page.goto('http://demo.marstanjx.com/acad280/puppeteer.html', {
+      waitUntil: 'networkidle0',
+    });
+    for (const app of apps) {
+      console.log(`generating for ${app}`);
+      await page.evaluate(`switchApp('${app}')`);
+      await page.waitFor(1000);
+      await page.screenshot({ path: `${path}/${app}-${Date.now()}.png` });
+    }
+    await browser.close();
+    toBeDeleted.forEach(f => fs.unlink(`${path}/${f}`, (err) => {
+      if (err) throw err;
+    }));
+  }
+  res.json({ success: true });
 });
 
-
-/**
- * Batch add ApplicationName
- *
- * @param Object
- * Example:
- * {
- * "applications": {
- *   "Adobe Photoshop 2020": 1
- *  }
- * }
- * Entry with existing name or id will be ignored
- *
- * @return Object
- * { count : Number } number of entries processed
- */
-router.post('/applications', async (req, res) => {
-  if (!req.body.applications) {
-    return res.status(422).json({
-      errors: {
-        message: 'missing/wrong applications field',
-      },
-    });
-  }
-  const existing_applications = await ApplicationName.find(
-    {},
-    { _id: 0 },
-    { sort: { id: 1 } },
-  ).exec();
-  if (!Array.isArray(existing_applications)) {
-    return res.status(422).json({
-      errors: {
-        message: 'server error',
-      },
-    });
-  }
-  const existing_id = [];
-  const existing_name = [];
-  existing_applications.forEach((process) => {
-    existing_id.push(process.id);
-    existing_name.push(process.name);
-  });
-  const applications = [];
-  Object.keys(req.body.applications).forEach((name) => {
-    const id = req.body.applications[name];
-    if (typeof id === 'number' && !existing_id.includes(id) && !existing_name.includes(name)) {
-      applications.push({ name, id });
+router.get('/thumbnail/:app', async (req, res) => {
+  const app = req.params.app;
+  const path = `${__dirname}/thumbnail`;
+  fs.readdirSync(path).forEach(f => {
+    // for each existing thumbnail file
+    const n = f.replace('.png', '').split('-');
+    // still valid for 1 hour
+    if (app === n[0]) {
+      res.sendFile(`${path}/${f}`);
     }
   });
-  if (applications.length > 0) await ProcessName.insertMany(applications);
-  res.json({ count: applications.length });
 });
 
 

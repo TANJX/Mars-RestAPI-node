@@ -29,7 +29,7 @@ if (process.env.NODE_ENV === 'test') {
     log.error('MONGO_URL missing. Did you create a .env file?');
     process.exit(1);
   }
-  db_waka = mongoose.createConnection(mongo_url + db_waka_url, { useNewUrlParser: true });
+  db_waka = mongoose.createConnection(mongo_url + db_waka_url, { useNewUrlParser: true, useUnifiedTopology: true });
   db_apps = db_waka.useDb(db_apps_url);
   db_acad280 = db_waka.useDb(db_acad280_url);
 }
@@ -69,7 +69,6 @@ db_apps.model('User', require('./apps/models/User'));
 db_apps.model('Token', require('./apps/models/Token'));
 
 db_acad280.model('MouseLocation', require('./acad280/models/MouseLocation'));
-db_acad280.model('ApplicationName', require('./acad280/models/ApplicationName'));
 db_acad280.model('ProcessName', require('./acad280/models/ProcessName'));
 
 // express

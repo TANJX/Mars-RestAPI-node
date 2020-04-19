@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const MouseLocationSchema = new mongoose.Schema({
-  time: Number,
+  time: { type: [Number], index: true },
   positionX: Number,
   positionY: Number,
   processId: Number, // foreign key to processName
