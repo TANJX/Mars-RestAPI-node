@@ -137,10 +137,11 @@ app.use((err, req, res, next) => {
 
 const httpServer = http.createServer(app);
 
-server = httpServer.listen(80, () => {
-  log.log('Server running on port 80');
+server = httpServer.listen(8000, () => {
+  log.log('Server running on port 8000');
 });
 
+/*
 if (process.env.NODE_ENV === 'production') {
   const key = fs.readFileSync('/home/node/app/cert/privkey.pem', 'utf8');
   const cert = fs.readFileSync('/home/node/app/cert/cert.pem', 'utf8');
@@ -156,3 +157,5 @@ if (process.env.NODE_ENV === 'production') {
     log.log('HTTPS Server running on port 443');
   });
 }
+
+*/

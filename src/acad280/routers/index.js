@@ -43,71 +43,68 @@ const router = Router();
  ]
  }
  */
-router.get('/locations', async (req, res) => {
-  ProcessName.find(
-    {},
+router.get('/locations/:appid', async (req, res) => {
+  const id = req.params.appid;
+  if (!mouse_location_cache_time[id]) {
+    mouse_location_cache_time[id] = -1;
+  }
+  const locations = await MouseLocation.find(
+    {
+      processId: id,
+      time: { $gt: mouse_location_cache_time[id] },
+    },
     { _id: 0 },
-    { sort: { id: 1 } },
-  ).then((processes) => {
-    if (processes) {
-      log.log('1');
-      MouseLocation.find(
-        {
-          time: { $gt: mouse_location_cache_time },
-        },
-        { _id: 0 },
-        { sort: { time: 1 } },
-      ).then((locations) => {
-        log.log(locations.length);
-        log.log(2);
-        if (locations.length > 0) {
-          mouse_location_cache_time = locations[locations.length - 1].time[0];
-          let lt = -1;
-          if (mouse_location_cache.length > 0) {
-            lt = mouse_location_cache[mouse_location_cache.length - 1].time[0];
-            for (const location of locations) {
-              if (location.time > lt) {
-                mouse_location_cache.push(location);
-              }
-            }
-          } else {
-            mouse_location_cache = locations;
-          }
-        }
-        log.log('3');
-        log.log(mouse_location_cache.length);
-        const result = [];
-        for (const process of processes) {
-          const n = process.name.replace('.exe', '');
-          const entry = {
-            icon: `${n}.png`,
-            name: process.fullname || n,
-            locations: mouse_location_cache.filter(l => l.processId === process.id).map(l => [l.time, l.positionX, l.positionY]),
-            width: process.width || 2560,
-            height: process.height || 1400,
-          };
-          if (entry.locations.length > 500) {
-            result.push(entry);
-          }
-        }
-        log.log('4');
-        result.sort((a, b) => b.locations.length - a.locations.length);
-        log.log('5');
-        res.json({ locations: result });
-      });
+    { sort: { time: 1 } },
+  ).exec();
+
+  const processed_location = locations.map(l =>
+    [typeof l.time === 'object' ? l.time[0] : l.time, l.positionX, l.positionY]
+  );
+  let current_cache;
+
+  let lt = -1;
+  if (!mouse_location_cache[id]) {
+    mouse_location_cache[id] = processed_location;
+    current_cache = processed_location;
+  } else {
+    current_cache = mouse_location_cache[id];
+    if (current_cache.length > 0) {
+      lt = current_cache[current_cache.length - 1][0];
+      if (typeof lt === 'object') {
+        lt = parseInt(lt[0]);
+      }
     }
-  });
+    for (const location of processed_location) {
+      if (location[0] > lt) {
+        current_cache.push(location);
+      }
+    }
+  }
+  if (lt > 0)
+    mouse_location_cache_time[id] = lt;
+  res.json({ locations: current_cache });
 });
 
-let mouse_location_cache = [];
-let mouse_location_cache_time = -1;
+
+router.get('/locations', async (req, res) => {
+  const locations = await MouseLocation.find(
+    {},
+    { _id: 0 },
+    { sort: { time: 1 } },
+  ).exec();
+  res.json({ locations });
+});
+
+
+let mouse_location_cache = {};
+let mouse_location_cache_time = {};
 
 
 /**
  * Batch add MouseLocations
  *
  * @param Object
- * { locations: Array}
+ * { locations: Array }
  * Entries with missing field will be ignored
  *
  * @return Object
@@ -135,29 +132,55 @@ router.post('/locations', async (req, res) => {
 });
 
 
+let useful_processes_cache;
+let useful_processes_cache_last_update = -1;
+
 /**
- * List all ProcessName
+ * List all ProcessName that have more than 500 entries, sorted by number of entries
  *
  * @return Object
  * Example:
- * {
- *   "explorer.exe": 1
- * }
+ * [
+ *   {
+ *     name: "explorer.exe",
+ *     id: 1
+ *   }
+ * ]
  */
 router.get('/processes', async (req, res) => {
-  ProcessName.find(
+  const processes = await ProcessName.find(
     {},
     { _id: 0 },
     { sort: { id: 1 } },
-  ).then((processes) => {
-    const result = {};
-    if (processes) {
-      for (const process of processes) {
-        result[process.name] = process.id;
+  ).exec();
+  if (useful_processes_cache_last_update + 1000 * 60 * 60 < Date.now()) {
+    useful_processes_cache = {};
+    for (const process of processes) {
+      const count = await MouseLocation.where('processId', process.id).countDocuments().exec();
+      if (count > 500) {
+        const id = parseInt(process.id);
+        useful_processes_cache[id] = count;
       }
     }
-    res.json(result);
-  });
+    useful_processes_cache_last_update = Date.now();
+  }
+  const result = [];
+  if (processes) {
+    for (const process of processes) {
+      const n = process.name.replace('.exe', '');
+      const id = parseInt(process.id);
+      if (useful_processes_cache[id])
+        result.push({
+          id,
+          name: `${n}`,
+          fullname: process.fullname || n,
+          width: process.width || 2560,
+          height: process.height || 1400,
+        });
+    }
+    result.sort(((a, b) => useful_processes_cache[b.id] - useful_processes_cache[a.id]));
+  }
+  res.json(result);
 });
 
 
@@ -250,7 +273,7 @@ router.post('/update_thumbnail', async (req, res) => {
     files[n[0]] = n[1];
   });
   if (apps.length > 0) {
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     const page = await browser.newPage();
     await page.setViewport({
       width: 960,
@@ -263,7 +286,7 @@ router.post('/update_thumbnail', async (req, res) => {
     for (const app of apps) {
       console.log(`generating for ${app}`);
       await page.evaluate(`switchApp('${app}')`);
-      await page.waitFor(1000);
+      await page.waitFor(5000);
       await page.screenshot({ path: `${path}/${app}-${Date.now()}.png` });
     }
     await browser.close();
