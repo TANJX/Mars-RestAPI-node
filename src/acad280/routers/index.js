@@ -2,6 +2,8 @@ import { Router } from 'express';
 
 const puppeteer = require('puppeteer');
 const fs = require('fs');
+require('dotenv').config();
+const path = require('path');
 
 import variable_valid from '../../util/variable_valid';
 import log from "../../util/log";
@@ -48,6 +50,20 @@ router.get('/locations/:appid', async (req, res) => {
   if (!mouse_location_cache_time[id]) {
     mouse_location_cache_time[id] = -1;
   }
+  let json = { location: [] };
+  try {
+    json = JSON.parse(await fs.readFileSync(path.join(process.env.ACAD280_FILES, `${id}.json`)));
+  } catch (e) {
+  }
+  res.json(json);
+});
+
+
+router.get('/locations/unused/:appid', async (req, res) => {
+  const id = req.params.appid;
+  if (!mouse_location_cache_time[id]) {
+    mouse_location_cache_time[id] = -1;
+  }
   const locations = await MouseLocation.find(
     {
       processId: id,
@@ -86,13 +102,31 @@ router.get('/locations/:appid', async (req, res) => {
 });
 
 
-router.get('/locations', async (req, res) => {
-  const locations = await MouseLocation.find(
+router.get('/locations/save', async (req, res) => {
+  const processes = await ProcessName.find(
     {},
     { _id: 0 },
-    { sort: { time: 1 } },
+    { sort: { id: 1 } },
   ).exec();
-  res.json({ locations });
+  for (const process of processes) {
+    const locations = await MouseLocation.find(
+      { processId: process.id },
+      { _id: 0 },
+      { sort: { time: 1 } },
+    ).exec();
+    fs.writeFile(`${process.id}.json`, JSON.stringify({
+      locations: locations.map(l =>
+        [typeof l.time === 'object' ? l.time[0] : l.time, l.positionX, l.positionY])
+    }), 'utf8', function (err) {
+      if (err) {
+        console.log("An error occured while writing JSON Object to File.");
+        return console.log(err);
+      }
+
+      console.log(`${process.id}: JSON file has been saved.`);
+    });
+  }
+  res.json({ success: true });
 });
 
 
