@@ -4,7 +4,8 @@ import log from './util/log';
 const fs = require('fs');
 const http = require('http');
 const https = require('https');
-require('dotenv').config();
+require('dotenv')
+  .config();
 
 const chalk = require('chalk');
 
@@ -29,7 +30,10 @@ if (process.env.NODE_ENV === 'test') {
     log.error('MONGO_URL missing. Did you create a .env file?');
     process.exit(1);
   }
-  db_waka = mongoose.createConnection(mongo_url + db_waka_url, { useNewUrlParser: true, useUnifiedTopology: true });
+  db_waka = mongoose.createConnection(mongo_url + db_waka_url, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  });
   db_apps = db_waka.useDb(db_apps_url);
   db_acad280 = db_waka.useDb(db_acad280_url);
 }
@@ -108,6 +112,7 @@ app.use((req, res, next) => {
 app.use('/waka', require('./waka/routers'));
 app.use('/apps', require('./apps/routers'));
 app.use('/acad280', require('./acad280/routers'));
+app.use('/droplet', require('./droplet/routers'));
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
@@ -141,7 +146,7 @@ server = httpServer.listen(8000, () => {
   log.log('Server running on port 8000');
 });
 
-/*
+
 if (process.env.NODE_ENV === 'production') {
   const key = fs.readFileSync('/home/node/app/cert/privkey.pem', 'utf8');
   const cert = fs.readFileSync('/home/node/app/cert/cert.pem', 'utf8');
@@ -157,5 +162,3 @@ if (process.env.NODE_ENV === 'production') {
     log.log('HTTPS Server running on port 443');
   });
 }
-
-*/
